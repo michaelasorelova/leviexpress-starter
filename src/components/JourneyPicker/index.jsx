@@ -32,15 +32,13 @@ export const JourneyPicker = ({ onJourneyChange }) => {
   const [toCity, setToCity] = useState('');
   const [date, setDate] = useState('');
   const [cities, setCities] = useState([]);
-  const [dates, setDates] = useState([]); // Prázdné pole jako výchozí stav
+  const [dates, setDates] = useState([]);
 
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        console.log('Načítám města z API...');
         const response = await fetch('https://apps.kodim.cz/daweb/leviexpress/api/cities');
         const json = await response.json();
-        console.log('Data měst:', json);
         setCities(json.results);
       } catch (error) {
         console.error('Chyba při načítání měst:', error);
@@ -49,10 +47,8 @@ export const JourneyPicker = ({ onJourneyChange }) => {
 
     const fetchDates = async () => {
       try {
-        console.log('Načítám termíny z API...');
         const response = await fetch('https://apps.kodim.cz/daweb/leviexpress/api/dates');
         const json = await response.json();
-        console.log('Data termínů:', json);
         setDates(json.results);
       } catch (error) {
         console.error('Chyba při načítání termínů:', error);
@@ -63,17 +59,23 @@ export const JourneyPicker = ({ onJourneyChange }) => {
     fetchDates();
   }, []);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    console.log('Odesílám formulář s cestou');
-    console.log('Odkud:', fromCity);
-    console.log('Kam:', toCity);
-    console.log('Datum:', date);
+  const handleSubmit = async (event) => {
+  event.preventDefault();
 
+  try {
+    const url = `https://apps.kodim.cz/daweb/leviexpress/api/journey?fromCity=${fromCity}&toCity=${toCity}&date=${date}`;
+    const response = await fetch(url);
+    const json = await response.json();
+
+    console.log('Raw API response:', json);
+    
     if (onJourneyChange) {
-      onJourneyChange({ fromCity, toCity, date });
+      onJourneyChange({ fromCity, toCity, date, results: json.results });
     }
-  };
+  } catch (error) {
+    console.error('Chyba při vyhledávání spojů:', error);
+  }
+};
 
   return (
     <div className="journey-picker container">
@@ -102,7 +104,7 @@ export const JourneyPicker = ({ onJourneyChange }) => {
           </label>
 
           <div className="journey-picker__controls">
-            <button className="btn" type="submit">
+            <button className="btn" type="submit" disabled={!fromCity || !toCity || !date}>
               Vyhledat spoj
             </button>
           </div>
